@@ -91,8 +91,8 @@ class HotelSeeder extends Seeder
         $admin = \App\Models\User::where('role', 'admin')->first();
         
         foreach ($hotels as $hotelData) {
-            // Ensure is_active is set to true
-            $hotelData['is_active'] = true;
+            // Ensure status is set to active
+            $hotelData['status'] = 'active';
             $hotelData['owner_id'] = $admin->id ?? null;
             $hotel = Hotel::create($hotelData);
 
