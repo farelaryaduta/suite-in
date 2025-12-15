@@ -53,8 +53,11 @@
                             {{ $hotel->owner->name ?? 'N/A' }}
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap">
-                            <span class="px-2 py-1 text-xs font-medium rounded-full {{ $hotel->is_active ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800' }}">
-                                {{ $hotel->is_active ? 'Active' : 'Inactive' }}
+                            <span class="px-2 py-1 text-xs font-medium rounded-full 
+                                {{ $hotel->status === 'active' ? 'bg-green-100 text-green-800' : 
+                                   ($hotel->status === 'pending' ? 'bg-yellow-100 text-yellow-800' : 
+                                   ($hotel->status === 'rejected' ? 'bg-red-100 text-red-800' : 'bg-gray-100 text-gray-800')) }}">
+                                {{ ucfirst($hotel->status) }}
                             </span>
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">

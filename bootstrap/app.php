@@ -15,6 +15,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->redirectGuestsTo('/login');
         $middleware->alias([
             'admin.owner' => \App\Http\Middleware\EnsureUserIsAdminOrOwner::class,
+            'hotel.owner' => \App\Http\Middleware\EnsureUserIsHotelOwner::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

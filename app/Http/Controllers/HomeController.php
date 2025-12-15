@@ -9,7 +9,7 @@ class HomeController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Hotel::where('is_active', true);
+        $query = Hotel::where('status', 'active');
 
         if ($request->has('city') && $request->city) {
             $query->where('city', 'like', '%' . $request->city . '%');

@@ -26,7 +26,7 @@ class Hotel extends Model
         'images',
         'rating',
         'total_reviews',
-        'is_active',
+        'status',
         'check_in_time',
         'check_out_time',
     ];
@@ -36,7 +36,6 @@ class Hotel extends Model
         'latitude' => 'decimal:8',
         'longitude' => 'decimal:8',
         'rating' => 'decimal:2',
-        'is_active' => 'boolean',
         'check_in_time' => 'datetime:H:i',
         'check_out_time' => 'datetime:H:i',
     ];

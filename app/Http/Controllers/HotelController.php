@@ -13,7 +13,7 @@ class HotelController extends Controller
     public function show($id, Request $request)
     {
         $hotel = Hotel::with(['rooms.roomType', 'amenities', 'reviews.user'])
-            ->where('is_active', true)
+            ->where('status', 'active')
             ->findOrFail($id);
 
         $checkIn = $request->get('check_in', now()->format('Y-m-d'));

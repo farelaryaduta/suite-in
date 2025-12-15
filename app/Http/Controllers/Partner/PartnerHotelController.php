@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\Admin;
+namespace App\Http\Controllers\Partner;
 
 use App\Http\Controllers\Controller;
 use App\Models\Hotel;
@@ -9,31 +9,22 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 
-class HotelManagementController extends Controller
+class PartnerHotelController extends Controller
 {
     public function index()
     {
-        $user = Auth::user();
-        
-        if ($user->isAdmin()) {
-            $hotels = Hotel::with('owner')->latest()->paginate(15);
-        } else {
-            $hotels = Hotel::where('owner_id', $user->id)->latest()->paginate(15);
-        }
-
-        return view('admin.hotels.index', compact('hotels'));
+        // Redirect to dashboard as dashboard lists hotels
+        return redirect()->route('partner.dashboard');
     }
 
     public function create()
     {
         $amenities = Amenity::whereIn('type', ['hotel', 'both'])->get();
-        return view('admin.hotels.create', compact('amenities'));
+        return view('partner.hotels.create', compact('amenities'));
     }
 
     public function store(Request $request)
     {
-        $user = Auth::user();
-        
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'description' => 'required|string',
@@ -53,8 +44,8 @@ class HotelManagementController extends Controller
             $validated['image'] = $request->file('image')->store('hotels', 'public');
         }
 
-        $validated['owner_id'] = $user->isAdmin() && $request->owner_id ? $request->owner_id : $user->id;
-        $validated['status'] = $user->isAdmin() ? ($request->status ?? 'active') : 'draft'; // Hotel owner needs admin approval
+        $validated['owner_id'] = Auth::id();
+        $validated['status'] = 'draft'; // Default to draft
         $validated['rating'] = 0;
         $validated['total_reviews'] = 0;
 
@@ -64,31 +55,23 @@ class HotelManagementController extends Controller
             $hotel->amenities()->attach($request->amenities);
         }
 
-        return redirect()->route('admin.hotels.index')->with('success', 'Hotel created successfully!');
+        return redirect()->route('partner.dashboard')->with('success', 'Hotel created successfully! Please submit for verification when ready.');
     }
 
-    public function edit($hotel)
+    public function edit(Hotel $hotel)
     {
-        $user = Auth::user();
-        
-        if ($user->isAdmin()) {
-            $hotel = Hotel::with('amenities')->findOrFail($hotel);
-        } else {
-            $hotel = Hotel::where('owner_id', $user->id)->with('amenities')->findOrFail($hotel);
+        if ($hotel->owner_id !== Auth::id()) {
+            abort(403);
         }
-
+        
         $amenities = Amenity::whereIn('type', ['hotel', 'both'])->get();
-        return view('admin.hotels.edit', compact('hotel', 'amenities'));
+        return view('partner.hotels.edit', compact('hotel', 'amenities'));
     }
 
-    public function update(Request $request, $hotel)
+    public function update(Request $request, Hotel $hotel)
     {
-        $user = Auth::user();
-        
-        if ($user->isAdmin()) {
-            $hotel = Hotel::findOrFail($hotel);
-        } else {
-            $hotel = Hotel::where('owner_id', $user->id)->findOrFail($hotel);
+        if ($hotel->owner_id !== Auth::id()) {
+            abort(403);
         }
 
         $validated = $request->validate([
@@ -104,6 +87,7 @@ class HotelManagementController extends Controller
             'image' => 'nullable|image|max:2048',
             'amenities' => 'nullable|array',
             'amenities.*' => 'exists:amenities,id',
+            'submit_for_review' => 'nullable|boolean',
         ]);
 
         if ($request->hasFile('image')) {
@@ -115,8 +99,8 @@ class HotelManagementController extends Controller
             unset($validated['image']);
         }
 
-        if ($user->isAdmin() && $request->has('status')) {
-            $validated['status'] = $request->status;
+        if ($request->has('submit_for_review') && $request->submit_for_review) {
+            $validated['status'] = 'pending';
         }
 
         $hotel->update($validated);
@@ -125,17 +109,13 @@ class HotelManagementController extends Controller
             $hotel->amenities()->sync($request->amenities);
         }
 
-        return redirect()->route('admin.hotels.index')->with('success', 'Hotel updated successfully!');
+        return redirect()->route('partner.dashboard')->with('success', 'Hotel updated successfully!');
     }
 
-    public function destroy($hotel)
+    public function destroy(Hotel $hotel)
     {
-        $user = Auth::user();
-        
-        if ($user->isAdmin()) {
-            $hotel = Hotel::findOrFail($hotel);
-        } else {
-            $hotel = Hotel::where('owner_id', $user->id)->findOrFail($hotel);
+        if ($hotel->owner_id !== Auth::id()) {
+            abort(403);
         }
 
         if ($hotel->image) {
@@ -144,6 +124,6 @@ class HotelManagementController extends Controller
 
         $hotel->delete();
 
-        return redirect()->route('admin.hotels.index')->with('success', 'Hotel deleted successfully!');
+        return redirect()->route('partner.dashboard')->with('success', 'Hotel deleted successfully!');
     }
 }
