@@ -20,7 +20,9 @@ class PartnerHotelController extends Controller
     public function create()
     {
         $amenities = Amenity::whereIn('type', ['hotel', 'both'])->get();
-        return view('partner.hotels.create', compact('amenities'));
+        $roomTypes = \App\Models\RoomType::all();
+        $roomAmenities = Amenity::whereIn('type', ['room', 'both'])->get();
+        return view('partner.hotels.create', compact('amenities', 'roomTypes', 'roomAmenities'));
     }
 
     public function store(Request $request)
@@ -38,24 +40,51 @@ class PartnerHotelController extends Controller
             'image' => 'nullable|image|max:2048',
             'amenities' => 'nullable|array',
             'amenities.*' => 'exists:amenities,id',
+            'rooms' => 'nullable|array',
+            'rooms.*.room_type_id' => 'required|exists:room_types,id',
+            'rooms.*.room_number' => 'required|string|max:50',
+            'rooms.*.price_per_night' => 'required|numeric|min:0',
+            'rooms.*.quantity' => 'required|integer|min:1',
+            'rooms.*.amenities' => 'nullable|array',
+            'rooms.*.amenities.*' => 'exists:amenities,id',
         ]);
 
         if ($request->hasFile('image')) {
             $validated['image'] = $request->file('image')->store('hotels', 'public');
         }
 
-        $validated['owner_id'] = Auth::id();
-        $validated['status'] = 'draft'; // Default to draft
-        $validated['rating'] = 0;
-        $validated['total_reviews'] = 0;
+        $hotel = \Illuminate\Support\Facades\DB::transaction(function () use ($validated, $request) {
+            // Create Hotel
+            $hotelData = collect($validated)->except(['amenities', 'rooms'])->toArray();
+            $hotelData['owner_id'] = Auth::id();
+            $hotelData['status'] = 'draft';
+            $hotelData['rating'] = 0;
+            $hotelData['total_reviews'] = 0;
 
-        $hotel = Hotel::create($validated);
+            $hotel = Hotel::create($hotelData);
 
-        if ($request->has('amenities')) {
-            $hotel->amenities()->attach($request->amenities);
-        }
+            if ($request->has('amenities')) {
+                $hotel->amenities()->attach($request->amenities);
+            }
 
-        return redirect()->route('partner.dashboard')->with('success', 'Hotel created successfully! Please submit for verification when ready.');
+            // Create Rooms
+            if ($request->has('rooms')) {
+                foreach ($request->rooms as $roomData) {
+                    $room = new \App\Models\Room($roomData);
+                    $room->hotel_id = $hotel->id;
+                    $room->is_active = true;
+                    $room->save();
+
+                    if (isset($roomData['amenities'])) {
+                        $room->amenities()->attach($roomData['amenities']);
+                    }
+                }
+            }
+
+            return $hotel;
+        });
+
+        return redirect()->route('partner.dashboard')->with('success', 'Hotel and Rooms created successfully!');
     }
 
     public function edit(Hotel $hotel)
@@ -63,9 +92,11 @@ class PartnerHotelController extends Controller
         if ($hotel->owner_id !== Auth::id()) {
             abort(403);
         }
-        
+
         $amenities = Amenity::whereIn('type', ['hotel', 'both'])->get();
-        return view('partner.hotels.edit', compact('hotel', 'amenities'));
+        $roomTypes = \App\Models\RoomType::all();
+        $roomAmenities = Amenity::whereIn('type', ['room', 'both'])->get();
+        return view('partner.hotels.edit', compact('hotel', 'amenities', 'roomTypes', 'roomAmenities'));
     }
 
     public function update(Request $request, Hotel $hotel)
@@ -88,6 +119,13 @@ class PartnerHotelController extends Controller
             'amenities' => 'nullable|array',
             'amenities.*' => 'exists:amenities,id',
             'submit_for_review' => 'nullable|boolean',
+            'rooms' => 'nullable|array',
+            'rooms.*.room_type_id' => 'required|exists:room_types,id',
+            'rooms.*.room_number' => 'required|string|max:50',
+            'rooms.*.price_per_night' => 'required|numeric|min:0',
+            'rooms.*.quantity' => 'required|integer|min:1',
+            'rooms.*.amenities' => 'nullable|array',
+            'rooms.*.amenities.*' => 'exists:amenities,id',
         ]);
 
         if ($request->hasFile('image')) {
@@ -107,6 +145,20 @@ class PartnerHotelController extends Controller
 
         if ($request->has('amenities')) {
             $hotel->amenities()->sync($request->amenities);
+        }
+
+        // Create New Rooms
+        if ($request->has('rooms')) {
+            foreach ($request->rooms as $roomData) {
+                $room = new \App\Models\Room($roomData);
+                $room->hotel_id = $hotel->id;
+                $room->is_active = true;
+                $room->save();
+
+                if (isset($roomData['amenities'])) {
+                    $room->amenities()->attach($roomData['amenities']);
+                }
+            }
         }
 
         return redirect()->route('partner.dashboard')->with('success', 'Hotel updated successfully!');

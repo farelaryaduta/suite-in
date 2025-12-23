@@ -68,4 +68,28 @@ class HotelController extends Controller
 
         return view('hotels.show', compact('hotel', 'rooms', 'checkIn', 'checkOut', 'guests'));
     }
+
+    public function search(Request $request)
+    {
+        $query = $request->get('query');
+        
+        if (strlen($query) < 2) {
+            return response()->json([]);
+        }
+
+        $hotels = Hotel::where('status', 'active')
+            ->where(function($q) use ($query) {
+                $q->where('name', 'like', "%{$query}%")
+                  ->orWhere('city', 'like', "%{$query}%");
+            })
+            ->select('id', 'name', 'city', 'address', 'image')
+            ->limit(5)
+            ->get();
+            
+        $hotels->each(function($hotel) {
+            $hotel->append('image_url');
+        });
+
+        return response()->json($hotels);
+    }
 }

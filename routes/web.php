@@ -26,7 +26,11 @@ Route::post('/register', [RegisterController::class, 'register'])->middleware('g
 Route::post('/logout', [LoginController::class, 'logout'])->name('logout')->middleware('auth');
 
 // Hotels
+Route::get('/hotels/search', [HotelController::class, 'search'])->name('hotels.search');
 Route::get('/hotels/{id}', [HotelController::class, 'show'])->name('hotels.show');
+
+// Payment Notification (Webhook)
+Route::post('/payment/notification', [PaymentController::class, 'notification'])->name('payment.notification');
 
 // Bookings (requires auth)
 Route::middleware('auth')->group(function () {
@@ -34,20 +38,20 @@ Route::middleware('auth')->group(function () {
     Route::get('/bookings/create', [BookingController::class, 'create'])->name('bookings.create');
     Route::post('/bookings', [BookingController::class, 'store'])->name('bookings.store');
     Route::get('/bookings/{id}', [BookingController::class, 'show'])->name('bookings.show');
-    
+
     // Payments
     Route::get('/bookings/{bookingId}/payment', [PaymentController::class, 'show'])->name('bookings.payment');
     Route::post('/bookings/{bookingId}/payment', [PaymentController::class, 'process'])->name('payments.process');
-    
+
     // Profile
     Route::get('/profile', [ProfileController::class, 'index'])->name('profile.index');
     Route::put('/profile', [ProfileController::class, 'update'])->name('profile.update');
 });
 
 // Admin & Hotel Owner Dashboard
-Route::middleware(['auth', 'admin.owner'])->prefix('admin')->name('admin.')->group(function () {
+Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
-    
+
     // Hotel Management
     Route::get('/hotels', [HotelManagementController::class, 'index'])->name('hotels.index');
     Route::get('/hotels/create', [HotelManagementController::class, 'create'])->name('hotels.create');
@@ -55,7 +59,7 @@ Route::middleware(['auth', 'admin.owner'])->prefix('admin')->name('admin.')->gro
     Route::get('/hotels/{hotel}/edit', [HotelManagementController::class, 'edit'])->name('hotels.edit');
     Route::put('/hotels/{hotel}', [HotelManagementController::class, 'update'])->name('hotels.update');
     Route::delete('/hotels/{hotel}', [HotelManagementController::class, 'destroy'])->name('hotels.destroy');
-    
+
     // Room Management
     Route::get('/hotels/{hotel}/rooms', [RoomManagementController::class, 'index'])->name('rooms.index');
     Route::get('/hotels/{hotel}/rooms/create', [RoomManagementController::class, 'create'])->name('rooms.create');
@@ -66,24 +70,28 @@ Route::middleware(['auth', 'admin.owner'])->prefix('admin')->name('admin.')->gro
 });
 
 // Partner Portal
-Route::prefix('partner')->name('partner.')->group(function() {
+Route::prefix('partner')->name('partner.')->group(function () {
     // Guest routes
-    Route::middleware('guest')->group(function() {
+    Route::middleware('guest')->group(function () {
         Route::get('/', function () {
             return view('partner.landing');
         })->name('index');
-        
+
         Route::get('/register', [PartnerAuthController::class, 'showRegisterForm'])->name('register');
         Route::post('/register', [PartnerAuthController::class, 'register']);
-        
+
         Route::get('/login', [PartnerAuthController::class, 'showLoginForm'])->name('login');
         Route::post('/login', [PartnerAuthController::class, 'login']);
     });
 
     // Authenticated routes
-    Route::middleware(['auth', 'hotel.owner'])->group(function() {
+    Route::middleware(['auth', 'hotel.owner'])->group(function () {
         Route::get('/dashboard', [PartnerDashboardController::class, 'index'])->name('dashboard');
         Route::resource('hotels', PartnerHotelController::class);
+
+        // Partner Room Management
+        Route::get('/hotels/{hotel}/rooms/create', [App\Http\Controllers\Partner\PartnerRoomController::class, 'create'])->name('hotels.rooms.create');
+        Route::post('/hotels/{hotel}/rooms', [App\Http\Controllers\Partner\PartnerRoomController::class, 'store'])->name('hotels.rooms.store');
     });
 });
 

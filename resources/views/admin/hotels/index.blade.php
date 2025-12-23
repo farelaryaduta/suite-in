@@ -8,9 +8,6 @@
         <h1 class="text-3xl font-bold text-gray-900">Manage Hotels</h1>
         <p class="text-gray-600 mt-2">Add, edit, or remove hotels</p>
     </div>
-    <a href="{{ route('admin.hotels.create') }}" class="bg-blue-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors">
-        + Add New Hotel
-    </a>
 </div>
 
 @if($hotels->count() > 0)
@@ -62,7 +59,6 @@
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
                             <div class="flex items-center space-x-3">
-                                <a href="{{ route('admin.rooms.index', $hotel->id) }}" class="text-blue-600 hover:text-blue-900">Rooms</a>
                                 <a href="{{ route('admin.hotels.edit', $hotel->id) }}" class="text-indigo-600 hover:text-indigo-900">Edit</a>
                                 <form action="{{ route('admin.hotels.destroy', $hotel->id) }}" method="POST" class="inline" onsubmit="return confirm('Are you sure?')">
                                     @csrf
