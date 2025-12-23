@@ -27,6 +27,10 @@ class HomeController extends Controller
             ->orderBy('rating', 'desc')
             ->paginate(12);
 
+        if ($request->ajax()) {
+            return view('partials.hotel-list', compact('hotels'))->render();
+        }
+
         return view('home', compact('hotels'));
     }
 }

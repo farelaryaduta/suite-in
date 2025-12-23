@@ -173,6 +173,32 @@
                 </div>
             </div>
 
+            <!-- Add New Rooms Section -->
+            <div class="p-8 bg-gray-50 border-t border-gray-200">
+                <div class="md:grid md:grid-cols-3 md:gap-6">
+                    <div class="md:col-span-1">
+                        <h3 class="text-lg font-medium leading-6 text-gray-900">Add New Rooms</h3>
+                        <p class="mt-1 text-sm text-gray-500">
+                            Add new rooms to your property. Existing rooms are managed from the dashboard.
+                        </p>
+                    </div>
+                    <div class="mt-5 md:mt-0 md:col-span-2">
+                        <div id="rooms-container" class="space-y-6">
+                            <!-- Room fields will be appended here -->
+                        </div>
+
+                        <div class="mt-6">
+                            <button type="button" onclick="addRoom()" class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-blue-700 bg-blue-100 hover:bg-blue-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                                <svg class="-ml-1 mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                                </svg>
+                                Add more room?
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <!-- Verification Status -->
             @if($hotel->status === 'draft' || $hotel->status === 'rejected')
             <div class="p-8 bg-blue-50">
@@ -210,4 +236,91 @@
             </div>
         </form>
     </div>
+    </div>
+
+    <!-- Room Template -->
+    <template id="room-template">
+        <div class="bg-white rounded-lg border border-gray-200 p-6 relative room-block transition-all duration-200">
+            <button type="button" onclick="removeRoom(this)" class="absolute top-4 right-4 text-gray-400 hover:text-red-500">
+                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                </svg>
+            </button>
+            
+            <h4 class="text-base font-medium text-gray-900 mb-4 room-title">New Room</h4>
+            
+            <div class="grid grid-cols-1 gap-y-6 gap-x-4 sm:grid-cols-2">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Room Type *</label>
+                    <select name="rooms[INDEX][room_type_id]" required
+                        class="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md">
+                        <option value="">Select Room Type</option>
+                        @foreach($roomTypes as $roomType)
+                            <option value="{{ $roomType->id }}">{{ $roomType->name }} ({{ $roomType->max_occupancy }} guests)</option>
+                        @endforeach
+                    </select>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Room Number *</label>
+                    <input type="text" name="rooms[INDEX][room_number]" required
+                        placeholder="e.g. 101"
+                        class="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md">
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Price per Night (Rp)*</label>
+                    <input type="number" name="rooms[INDEX][price_per_night]" required min="0"
+                        class="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md">
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Quantity *</label>
+                    <input type="number" name="rooms[INDEX][quantity]" value="1" required min="1"
+                        class="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md">
+                </div>
+
+                <div class="sm:col-span-2">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Room Amenities</label>
+                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                        @foreach($roomAmenities as $amenity)
+                            <div class="relative flex items-start">
+                                <div class="flex items-center h-5">
+                                    <input name="rooms[INDEX][amenities][]" value="{{ $amenity->id }}" type="checkbox"
+                                        class="focus:ring-blue-500 h-4 w-4 text-blue-600 border-gray-300 rounded">
+                                </div>
+                                <div class="ml-3 text-sm">
+                                    <span class="font-medium text-gray-700">{{ $amenity->name }}</span>
+                                </div>
+                            </div>
+                        @endforeach
+                    </div>
+                </div>
+            </div>
+        </div>
+    </template>
+
+    <script>
+        let roomIndex = 0;
+        const container = document.getElementById('rooms-container');
+        const template = document.getElementById('room-template');
+
+        function addRoom() {
+            const clone = template.content.cloneNode(true);
+            const html = clone.firstElementChild.outerHTML.replace(/INDEX/g, roomIndex);
+            
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = html;
+            const newBlock = tempDiv.firstElementChild;
+            
+            newBlock.querySelector('.room-title').textContent = 'New Room ' + (roomIndex + 1);
+            
+            container.appendChild(newBlock);
+            roomIndex++;
+        }
+
+        function removeRoom(button) {
+            button.closest('.room-block').remove();
+        }
+    </script>
 @endsection

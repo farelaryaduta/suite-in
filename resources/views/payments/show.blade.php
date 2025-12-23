@@ -3,6 +3,9 @@
 @section('title', 'Payment - suite.in')
 
 @section('content')
+<!-- Midtrans Snap Script -->
+<script src="https://app.sandbox.midtrans.com/snap/snap.js" data-client-key="{{ config('midtrans.client_key') }}"></script>
+
 <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
     <h1 class="text-3xl font-bold text-gray-900 mb-8">Payment</h1>
 
@@ -31,43 +34,16 @@
             </div>
 
             <div class="bg-white rounded-xl shadow-md p-6">
-                <h2 class="text-xl font-semibold mb-4">Payment Method</h2>
-                <form action="{{ route('payments.process', $booking->id) }}" method="POST">
-                    @csrf
-                    <div class="space-y-3">
-                        <label class="flex items-center p-4 border-2 border-gray-200 rounded-lg cursor-pointer hover:border-blue-500">
-                            <input type="radio" name="method" value="dummy" checked class="mr-3">
-                            <div>
-                                <p class="font-medium">Dummy Payment (For Testing)</p>
-                                <p class="text-sm text-gray-600">This is a test payment method</p>
-                            </div>
-                        </label>
-                        <label class="flex items-center p-4 border-2 border-gray-200 rounded-lg cursor-pointer hover:border-blue-500">
-                            <input type="radio" name="method" value="credit_card" class="mr-3">
-                            <div>
-                                <p class="font-medium">Credit Card</p>
-                                <p class="text-sm text-gray-600">Visa, Mastercard, etc.</p>
-                            </div>
-                        </label>
-                        <label class="flex items-center p-4 border-2 border-gray-200 rounded-lg cursor-pointer hover:border-blue-500">
-                            <input type="radio" name="method" value="bank_transfer" class="mr-3">
-                            <div>
-                                <p class="font-medium">Bank Transfer</p>
-                                <p class="text-sm text-gray-600">Transfer via bank</p>
-                            </div>
-                        </label>
-                        <label class="flex items-center p-4 border-2 border-gray-200 rounded-lg cursor-pointer hover:border-blue-500">
-                            <input type="radio" name="method" value="e_wallet" class="mr-3">
-                            <div>
-                                <p class="font-medium">E-Wallet</p>
-                                <p class="text-sm text-gray-600">GoPay, OVO, DANA, etc.</p>
-                            </div>
-                        </label>
-                    </div>
-                    <button type="submit" class="w-full mt-6 bg-blue-600 text-white px-4 py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors">
-                        Pay Now
-                    </button>
-                </form>
+                <h2 class="text-xl font-semibold mb-4">Payment Details</h2>
+                
+                <div class="mb-6">
+                    <p class="text-gray-600">Total Amount:</p>
+                    <p class="text-3xl font-bold text-blue-600">Rp {{ number_format($booking->total_amount, 0, ',', '.') }}</p>
+                </div>
+
+                <button id="pay-button" class="w-full bg-blue-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-blue-700 transition duration-300">
+                    Pay Now
+                </button>
             </div>
         </div>
 
@@ -96,5 +72,28 @@
         </div>
     </div>
 </div>
+
+<script type="text/javascript">
+    var payButton = document.getElementById('pay-button');
+    payButton.addEventListener('click', function () {
+        window.snap.pay('{{ $payment->snap_token }}', {
+            onSuccess: function (result) {
+                // Redirect ke halaman sukses atau booking detail
+                window.location.href = "{{ route('bookings.show', $booking->id) }}";
+            },
+            onPending: function (result) {
+                alert("Waiting for your payment!");
+                location.reload();
+            },
+            onError: function (result) {
+                alert("Payment failed!");
+                location.reload();
+            },
+            onClose: function () {
+                alert('You closed the popup without finishing the payment');
+            }
+        });
+    });
+</script>
 @endsection
 

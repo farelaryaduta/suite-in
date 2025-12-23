@@ -14,7 +14,7 @@ class HotelManagementController extends Controller
     public function index()
     {
         $user = Auth::user();
-        
+
         if ($user->isAdmin()) {
             $hotels = Hotel::with('owner')->latest()->paginate(15);
         } else {
@@ -33,7 +33,7 @@ class HotelManagementController extends Controller
     public function store(Request $request)
     {
         $user = Auth::user();
-        
+
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'description' => 'required|string',
@@ -70,7 +70,7 @@ class HotelManagementController extends Controller
     public function edit($hotel)
     {
         $user = Auth::user();
-        
+
         if ($user->isAdmin()) {
             $hotel = Hotel::with('amenities')->findOrFail($hotel);
         } else {
@@ -84,14 +84,14 @@ class HotelManagementController extends Controller
     public function update(Request $request, $hotel)
     {
         $user = Auth::user();
-        
+
         if ($user->isAdmin()) {
             $hotel = Hotel::findOrFail($hotel);
         } else {
             $hotel = Hotel::where('owner_id', $user->id)->findOrFail($hotel);
         }
 
-        $validated = $request->validate([
+        $rules = [
             'name' => 'required|string|max:255',
             'description' => 'required|string',
             'address' => 'required|string',
@@ -104,7 +104,13 @@ class HotelManagementController extends Controller
             'image' => 'nullable|image|max:2048',
             'amenities' => 'nullable|array',
             'amenities.*' => 'exists:amenities,id',
-        ]);
+        ];
+
+        if ($user->isAdmin()) {
+            $rules['status'] = 'required|in:active,pending,draft,rejected';
+        }
+
+        $validated = $request->validate($rules);
 
         if ($request->hasFile('image')) {
             if ($hotel->image) {
@@ -115,9 +121,10 @@ class HotelManagementController extends Controller
             unset($validated['image']);
         }
 
-        if ($user->isAdmin() && $request->has('status')) {
-            $validated['status'] = $request->status;
-        }
+        // Status is already in $validated if user is admin
+        // if ($user->isAdmin() && $request->has('status')) {
+        //    $validated['status'] = $request->status;
+        // }
 
         $hotel->update($validated);
 
@@ -131,7 +138,7 @@ class HotelManagementController extends Controller
     public function destroy($hotel)
     {
         $user = Auth::user();
-        
+
         if ($user->isAdmin()) {
             $hotel = Hotel::findOrFail($hotel);
         } else {
