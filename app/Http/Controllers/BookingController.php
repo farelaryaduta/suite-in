@@ -37,8 +37,8 @@ class BookingController extends Controller
         }
 
         $subtotal = $room->price_per_night * $nights;
-        $tax = $subtotal * 0.10; // 10% tax
-        $serviceCharge = $subtotal * 0.05; // 5% service charge
+        $tax = $subtotal * config('booking.tax_rate', 0.10); // Tax goes to platform (admin)
+        $serviceCharge = $subtotal * config('booking.service_charge_rate', 0.05); // Service charge goes to partner
         $totalAmount = $subtotal + $tax + $serviceCharge;
         $guests = $request->guests;
 
@@ -52,11 +52,11 @@ class BookingController extends Controller
             'room_id' => 'required|exists:rooms,id',
             'check_in' => 'required|date|after_or_equal:today',
             'check_out' => 'required|date|after:check_in',
-            'guests' => 'required|integer|min:1',
+            'guests' => 'required|integer|min:1|max:20', // Added max limit
             'guest_name' => 'required|string|max:255',
             'guest_email' => 'required|email|max:255',
             'guest_phone' => 'required|string|max:20',
-            'special_requests' => 'nullable|string',
+            'special_requests' => 'nullable|string|max:1000', // Added max limit
         ]);
 
         $room = Room::findOrFail($request->room_id);
@@ -71,9 +71,15 @@ class BookingController extends Controller
         $checkOut = Carbon::parse($request->check_out);
         $nights = $checkIn->diffInDays($checkOut);
 
+        // Validate booking duration
+        $maxDays = config('booking.max_booking_days', 30);
+        if ($nights > $maxDays) {
+            return back()->withErrors(['check_out' => "Maximum booking duration is {$maxDays} days."])->withInput();
+        }
+
         $subtotal = $room->price_per_night * $nights;
-        $tax = $subtotal * 0.10;
-        $serviceCharge = $subtotal * 0.05;
+        $tax = $subtotal * config('booking.tax_rate', 0.10); // Tax goes to platform (admin)
+        $serviceCharge = $subtotal * config('booking.service_charge_rate', 0.05); // Service charge goes to partner
         $totalAmount = $subtotal + $tax + $serviceCharge;
 
         $booking = Booking::create([

@@ -18,6 +18,15 @@
 
     <div class="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
         <div class="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
+            @if(isset($loggedOut) && $loggedOut)
+                <div class="mb-6 p-4 bg-blue-50 border border-blue-300 rounded-lg">
+                    <p class="text-sm text-blue-800">
+                        <strong>Session ended.</strong> You were logged in as {{ $previousRole === 'Admin' ? 'an' : 'a' }} <span class="font-semibold">{{ $previousRole }}</span>.
+                        Please register or login with your partner account to continue.
+                    </p>
+                </div>
+            @endif
+
             <form class="space-y-6" action="{{ route('partner.register') }}" method="POST">
                 @csrf
 

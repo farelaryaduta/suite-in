@@ -8,6 +8,7 @@ use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\RegisterController;
+use App\Http\Controllers\Admin\AdminAuthController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\HotelManagementController;
 use App\Http\Controllers\Admin\RoomManagementController;
@@ -18,11 +19,11 @@ use App\Http\Controllers\Partner\PartnerHotelController;
 // Home
 Route::get('/', [HomeController::class, 'index'])->name('home');
 
-// Authentication
+// Authentication (with rate limiting to prevent brute force attacks)
 Route::get('/login', [LoginController::class, 'showLoginForm'])->name('login')->middleware('guest');
-Route::post('/login', [LoginController::class, 'login'])->middleware('guest');
+Route::post('/login', [LoginController::class, 'login'])->middleware(['guest', 'throttle:5,1']); // 5 attempts per minute
 Route::get('/register', [RegisterController::class, 'showRegisterForm'])->name('register')->middleware('guest');
-Route::post('/register', [RegisterController::class, 'register'])->middleware('guest');
+Route::post('/register', [RegisterController::class, 'register'])->middleware(['guest', 'throttle:3,1']); // 3 registrations per minute
 Route::post('/logout', [LoginController::class, 'logout'])->name('logout')->middleware('auth');
 
 // Hotels
@@ -42,13 +43,24 @@ Route::middleware('auth')->group(function () {
     // Payments
     Route::get('/bookings/{bookingId}/payment', [PaymentController::class, 'show'])->name('bookings.payment');
     Route::post('/bookings/{bookingId}/payment', [PaymentController::class, 'process'])->name('payments.process');
+    Route::post('/bookings/{bookingId}/payment/check-status', [PaymentController::class, 'checkStatus'])->name('payments.check-status');
 
     // Profile
     Route::get('/profile', [ProfileController::class, 'index'])->name('profile.index');
     Route::put('/profile', [ProfileController::class, 'update'])->name('profile.update');
 });
 
-// Admin & Hotel Owner Dashboard
+// Admin Authentication (separate from main auth)
+Route::prefix('admin')->name('admin.')->group(function () {
+    // Admin login - no guest middleware, handled in controller
+    Route::get('/login', [AdminAuthController::class, 'showLoginForm'])->name('login');
+    Route::post('/login', [AdminAuthController::class, 'login'])->middleware('throttle:5,1'); // Rate limit: 5 attempts per minute
+    
+    // Admin logout (requires auth)
+    Route::post('/logout', [AdminAuthController::class, 'logout'])->name('logout')->middleware('auth');
+});
+
+// Admin Dashboard (requires admin role)
 Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
@@ -71,20 +83,21 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
 
 // Partner Portal
 Route::prefix('partner')->name('partner.')->group(function () {
-    // Guest routes
-    Route::middleware('guest')->group(function () {
-        Route::get('/', function () {
-            return view('partner.landing');
-        })->name('index');
+    // Landing page - accessible to all
+    Route::get('/', function () {
+        return view('partner.landing');
+    })->name('index');
 
-        Route::get('/register', [PartnerAuthController::class, 'showRegisterForm'])->name('register');
-        Route::post('/register', [PartnerAuthController::class, 'register']);
+    // Partner auth - with rate limiting
+    Route::get('/register', [PartnerAuthController::class, 'showRegisterForm'])->name('register');
+    Route::post('/register', [PartnerAuthController::class, 'register'])->middleware('throttle:3,1'); // 3 registrations per minute
+    Route::get('/login', [PartnerAuthController::class, 'showLoginForm'])->name('login');
+    Route::post('/login', [PartnerAuthController::class, 'login'])->middleware('throttle:5,1'); // 5 attempts per minute
 
-        Route::get('/login', [PartnerAuthController::class, 'showLoginForm'])->name('login');
-        Route::post('/login', [PartnerAuthController::class, 'login']);
-    });
+    // Partner logout (requires auth)
+    Route::post('/logout', [PartnerAuthController::class, 'logout'])->name('logout')->middleware('auth');
 
-    // Authenticated routes
+    // Authenticated routes (hotel_owner only)
     Route::middleware(['auth', 'hotel.owner'])->group(function () {
         Route::get('/dashboard', [PartnerDashboardController::class, 'index'])->name('dashboard');
         Route::resource('hotels', PartnerHotelController::class);

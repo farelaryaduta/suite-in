@@ -24,23 +24,27 @@
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between items-center h-16">
                 <div class="flex items-center space-x-8">
-                    <a href="{{ route('admin.dashboard') }}" class="text-2xl font-bold text-gray-900">
+                    <a href="{{ Auth::check() ? route('admin.dashboard') : route('admin.login') }}" class="text-2xl font-bold text-gray-900">
                         suite.<span class="text-blue-600">in</span> <span class="text-sm text-gray-500">Admin</span>
                     </a>
+                    @auth
                     <div class="hidden md:flex space-x-4">
                         <a href="{{ route('admin.dashboard') }}" class="text-gray-700 hover:text-gray-900 px-3 py-2 text-sm font-medium {{ request()->routeIs('admin.dashboard') ? 'text-blue-600 border-b-2 border-blue-600' : '' }}">Dashboard</a>
                         <a href="{{ route('admin.hotels.index') }}" class="text-gray-700 hover:text-gray-900 px-3 py-2 text-sm font-medium {{ request()->routeIs('admin.hotels.*') ? 'text-blue-600 border-b-2 border-blue-600' : '' }}">Hotels</a>
                         <a href="{{ route('home') }}" class="text-gray-700 hover:text-gray-900 px-3 py-2 text-sm font-medium">View Site</a>
                     </div>
+                    @endauth
                 </div>
+                @auth
                 <div class="flex items-center space-x-4">
                     <span class="text-sm text-gray-600">{{ Auth::user()->name }}</span>
-                    <span class="px-2 py-1 text-xs font-medium rounded-full bg-blue-100 text-blue-800">{{ ucfirst(str_replace('_', ' ', Auth::user()->role)) }}</span>
-                    <form method="POST" action="{{ route('logout') }}" class="inline">
+                    <span class="px-2 py-1 text-xs font-medium rounded-full bg-blue-100 text-blue-800">{{ ucfirst(str_replace('_', ' ', Auth::user()->role ?? 'user')) }}</span>
+                    <form method="POST" action="{{ route('admin.logout') }}" class="inline">
                         @csrf
                         <button type="submit" class="text-gray-700 hover:text-gray-900 px-3 py-2 text-sm font-medium">Logout</button>
                     </form>
                 </div>
+                @endauth
             </div>
         </div>
     </nav>

@@ -21,7 +21,7 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
-        'role',
+        // 'role' removed - must be set explicitly to prevent mass assignment attacks
     ];
 
     /**

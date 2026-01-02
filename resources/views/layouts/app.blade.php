@@ -63,13 +63,22 @@
                 <!-- Navigation Links -->
                 <div class="hidden md:flex items-center space-x-1">
                     @auth
-                        @if(Auth::user()->isAdmin() || Auth::user()->isHotelOwner())
+                        @if(Auth::user()->isAdmin())
                             <a href="{{ route('admin.dashboard') }}" class="nav-link text-gray-600 hover:text-blue-600 px-4 py-2 text-sm font-medium rounded-lg hover:bg-blue-50 transition-colors">
                                 <span class="flex items-center space-x-2">
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path>
                                     </svg>
-                                    <span>Dashboard</span>
+                                    <span>Admin Dashboard</span>
+                                </span>
+                            </a>
+                        @elseif(Auth::user()->isHotelOwner())
+                            <a href="{{ route('partner.dashboard') }}" class="nav-link text-gray-600 hover:text-blue-600 px-4 py-2 text-sm font-medium rounded-lg hover:bg-blue-50 transition-colors">
+                                <span class="flex items-center space-x-2">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path>
+                                    </svg>
+                                    <span>Partner Dashboard</span>
                                 </span>
                             </a>
                         @endif
@@ -119,8 +128,10 @@
         <div id="mobile-menu" class="hidden md:hidden bg-white border-t border-gray-100 pb-4">
             <div class="px-4 pt-2 space-y-1">
                 @auth
-                    @if(Auth::user()->isAdmin() || Auth::user()->isHotelOwner())
-                        <a href="{{ route('admin.dashboard') }}" class="block px-4 py-2 text-gray-600 hover:bg-blue-50 rounded-lg">Dashboard</a>
+                    @if(Auth::user()->isAdmin())
+                        <a href="{{ route('admin.dashboard') }}" class="block px-4 py-2 text-gray-600 hover:bg-blue-50 rounded-lg">Admin Dashboard</a>
+                    @elseif(Auth::user()->isHotelOwner())
+                        <a href="{{ route('partner.dashboard') }}" class="block px-4 py-2 text-gray-600 hover:bg-blue-50 rounded-lg">Partner Dashboard</a>
                     @endif
                     <a href="{{ route('bookings.index') }}" class="block px-4 py-2 text-gray-600 hover:bg-blue-50 rounded-lg">Pesanan Saya</a>
                     <a href="{{ route('profile.index') }}" class="block px-4 py-2 text-gray-600 hover:bg-blue-50 rounded-lg">Profil</a>

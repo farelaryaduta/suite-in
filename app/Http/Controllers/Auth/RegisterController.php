@@ -24,15 +24,19 @@ class RegisterController extends Controller
             'password' => ['required', 'confirmed', Password::defaults()],
         ]);
 
-        $user = User::create([
-            'name' => $request->name,
-            'email' => $request->email,
-            'password' => Hash::make($request->password),
-            'role' => 'customer', // Default role
-        ]);
+        try {
+            $user = new User();
+            $user->name = $request->name;
+            $user->email = $request->email;
+            $user->password = Hash::make($request->password);
+            $user->role = 'customer'; // Explicitly set role (not from fillable)
+            $user->save();
 
-        Auth::login($user);
+            Auth::login($user);
 
-        return redirect('/');
+            return redirect('/');
+        } catch (\Exception $e) {
+            return back()->withErrors(['email' => 'Registration failed. Please try again.'])->withInput();
+        }
     }
 }

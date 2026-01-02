@@ -1564,7 +1564,7 @@
                         <div class="ml-3 relative">
                             <div class="flex items-center space-x-4">
                                 <span class="text-sm font-medium text-gray-700">{{ Auth::user()->name }}</span>
-                                <form method="POST" action="{{ route('logout') }}">
+                                <form method="POST" action="{{ route('partner.logout') }}">
                                     @csrf
                                     <button type="submit"
                                         class="text-sm text-gray-500 hover:text-gray-700 font-medium">Logout</button>

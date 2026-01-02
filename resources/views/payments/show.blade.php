@@ -78,14 +78,39 @@
     payButton.addEventListener('click', function () {
         window.snap.pay('{{ $payment->snap_token }}', {
             onSuccess: function (result) {
-                // Redirect ke halaman sukses atau booking detail
-                window.location.href = "{{ route('bookings.show', $booking->id) }}";
+                console.log('Payment Success:', result);
+                
+                // Show loading message
+                payButton.textContent = 'Processing...';
+                payButton.disabled = true;
+                
+                // Call backend to update payment status (fallback for webhook)
+                fetch("{{ route('payments.check-status', $booking->id) }}", {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    console.log('Status check result:', data);
+                    // Redirect to booking detail page
+                    window.location.href = "{{ route('bookings.show', $booking->id) }}";
+                })
+                .catch(error => {
+                    console.error('Error checking status:', error);
+                    // Still redirect even if status check fails (webhook might handle it)
+                    window.location.href = "{{ route('bookings.show', $booking->id) }}";
+                });
             },
             onPending: function (result) {
+                console.log('Payment Pending:', result);
                 alert("Waiting for your payment!");
                 location.reload();
             },
             onError: function (result) {
+                console.error('Payment Error:', result);
                 alert("Payment failed!");
                 location.reload();
             },

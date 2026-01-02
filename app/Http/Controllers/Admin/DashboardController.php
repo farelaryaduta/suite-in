@@ -14,26 +14,31 @@ class DashboardController extends Controller
     {
         $user = Auth::user();
         
-        if ($user->isAdmin()) {
-            // Admin sees all hotels and bookings
-            $hotels = Hotel::count();
-            $bookings = Booking::count();
-            $revenue = Booking::where('status', 'confirmed')->sum('total_amount');
-            $recentBookings = Booking::with(['hotel', 'user'])->latest()->take(10)->get();
-        } else {
-            // Hotel owner sees only their hotels
-            $hotels = Hotel::where('owner_id', $user->id)->count();
-            $bookings = Booking::whereHas('hotel', function($q) use ($user) {
-                $q->where('owner_id', $user->id);
-            })->count();
-            $revenue = Booking::whereHas('hotel', function($q) use ($user) {
-                $q->where('owner_id', $user->id);
-            })->where('status', 'confirmed')->sum('total_amount');
-            $recentBookings = Booking::whereHas('hotel', function($q) use ($user) {
-                $q->where('owner_id', $user->id);
-            })->with(['hotel', 'user'])->latest()->take(10)->get();
-        }
+        // Admin sees platform-wide stats
+        // Admin revenue = only 10% tax from all confirmed bookings
+        $hotels = Hotel::count();
+        $bookings = Booking::count();
+        $confirmedBookings = Booking::where('status', 'confirmed')->count();
+        
+        // Platform revenue (tax only - 10% goes to admin/platform)
+        $platformRevenue = Booking::where('status', 'confirmed')->sum('tax');
+        
+        // Total transaction volume (for reference)
+        $totalTransactionVolume = Booking::where('status', 'confirmed')->sum('total_amount');
+        
+        $recentBookings = Booking::with(['hotel', 'user', 'payment'])->latest()->take(10)->get();
+        
+        // Pending hotels awaiting approval
+        $pendingHotels = Hotel::where('status', 'pending')->count();
 
-        return view('admin.dashboard', compact('hotels', 'bookings', 'revenue', 'recentBookings'));
+        return view('admin.dashboard', compact(
+            'hotels', 
+            'bookings', 
+            'confirmedBookings',
+            'platformRevenue',
+            'totalTransactionVolume',
+            'recentBookings',
+            'pendingHotels'
+        ));
     }
 }

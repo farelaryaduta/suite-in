@@ -11,8 +11,24 @@ use Illuminate\Validation\Rules\Password;
 
 class PartnerAuthController extends Controller
 {
-    public function showRegisterForm()
+    public function showRegisterForm(Request $request)
     {
+        // If already logged in as hotel_owner, redirect to dashboard
+        if (Auth::check()) {
+            if (Auth::user()->isHotelOwner()) {
+                return redirect()->route('partner.dashboard');
+            }
+            
+            // User is logged in but not as partner - auto logout and show register
+            $previousRole = Auth::user()->role === 'admin' ? 'Admin' : ucfirst(Auth::user()->role ?? 'customer');
+            Auth::logout();
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
+            
+            return view('partner.auth.register')->with('loggedOut', true)
+                ->with('previousRole', $previousRole);
+        }
+        
         return view('partner.auth.register');
     }
 
@@ -22,23 +38,42 @@ class PartnerAuthController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users',
             'password' => ['required', 'confirmed', Password::defaults()],
-            // 'phone' => 'required|string|max:20', // User table might not have phone yet, let's check migration
         ]);
 
-        $user = User::create([
-            'name' => $request->name,
-            'email' => $request->email,
-            'password' => Hash::make($request->password),
-            'role' => 'hotel_owner',
-        ]);
+        try {
+            $user = new User();
+            $user->name = $request->name;
+            $user->email = $request->email;
+            $user->password = Hash::make($request->password);
+            $user->role = 'hotel_owner'; // Explicitly set role (not from fillable)
+            $user->save();
 
-        Auth::login($user);
+            Auth::login($user);
 
-        return redirect()->route('partner.dashboard');
+            return redirect()->route('partner.dashboard');
+        } catch (\Exception $e) {
+            return back()->withErrors(['email' => 'Registration failed. Please try again.'])->withInput();
+        }
     }
 
-    public function showLoginForm()
+    public function showLoginForm(Request $request)
     {
+        // If already logged in as hotel_owner, redirect to dashboard
+        if (Auth::check()) {
+            if (Auth::user()->isHotelOwner()) {
+                return redirect()->route('partner.dashboard');
+            }
+            
+            // User is logged in but not as partner - auto logout and show login
+            $previousRole = Auth::user()->role === 'admin' ? 'Admin' : ucfirst(Auth::user()->role ?? 'customer');
+            Auth::logout();
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
+            
+            return view('partner.auth.login')->with('loggedOut', true)
+                ->with('previousRole', $previousRole);
+        }
+        
         return view('partner.auth.login');
     }
 
@@ -49,13 +84,16 @@ class PartnerAuthController extends Controller
             'password' => ['required'],
         ]);
 
-        if (Auth::attempt($credentials)) {
+        if (Auth::attempt($credentials, $request->boolean('remember'))) {
             $request->session()->regenerate();
 
-            if (Auth::user()->role !== 'hotel_owner' && Auth::user()->role !== 'admin') {
+            // Partner portal is ONLY for hotel_owner role - no admin access
+            if (Auth::user()->role !== 'hotel_owner') {
                 Auth::logout();
+                $request->session()->invalidate();
+                $request->session()->regenerateToken();
                 return back()->withErrors([
-                    'email' => 'This portal is for partners only.',
+                    'email' => 'This portal is for partners only. If you are an admin, please use the admin login.',
                 ]);
             }
 
@@ -65,5 +103,13 @@ class PartnerAuthController extends Controller
         return back()->withErrors([
             'email' => 'The provided credentials do not match our records.',
         ]);
+    }
+
+    public function logout(Request $request)
+    {
+        Auth::logout();
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
+        return redirect()->route('partner.index');
     }
 }

@@ -23,6 +23,19 @@ class LoginController extends Controller
 
         if (Auth::attempt($request->only('email', 'password'), $request->boolean('remember'))) {
             $request->session()->regenerate();
+            
+            $user = Auth::user();
+            
+            // Role-based redirect - direct users to their appropriate dashboard
+            if ($user->isAdmin()) {
+                return redirect()->route('admin.dashboard');
+            }
+            
+            if ($user->isHotelOwner()) {
+                return redirect()->route('partner.dashboard');
+            }
+            
+            // Regular customers go to home or intended page
             return redirect()->intended('/');
         }
 

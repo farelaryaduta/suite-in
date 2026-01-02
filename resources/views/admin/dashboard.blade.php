@@ -4,11 +4,11 @@
 
 @section('content')
 <div class="mb-8">
-    <h1 class="text-3xl font-bold text-gray-900">Dashboard</h1>
-    <p class="text-gray-600 mt-2">Welcome back, {{ Auth::user()->name }}!</p>
+    <h1 class="text-3xl font-bold text-gray-900">Admin Dashboard</h1>
+    <p class="text-gray-600 mt-2">Welcome back, {{ Auth::user()->name }}! Here's your platform overview.</p>
 </div>
 
-<div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
     <div class="bg-white rounded-xl shadow-md p-6">
         <div class="flex items-center justify-between">
             <div>
@@ -21,6 +21,9 @@
                 </svg>
             </div>
         </div>
+        @if($pendingHotels > 0)
+            <p class="text-xs text-yellow-600 mt-2">{{ $pendingHotels }} pending approval</p>
+        @endif
     </div>
 
     <div class="bg-white rounded-xl shadow-md p-6">
@@ -35,13 +38,14 @@
                 </svg>
             </div>
         </div>
+        <p class="text-xs text-green-600 mt-2">{{ $confirmedBookings }} confirmed</p>
     </div>
 
     <div class="bg-white rounded-xl shadow-md p-6">
         <div class="flex items-center justify-between">
             <div>
-                <p class="text-sm text-gray-600 mb-1">Total Revenue</p>
-                <p class="text-3xl font-bold text-gray-900">Rp {{ number_format($revenue, 0, ',', '.') }}</p>
+                <p class="text-sm text-gray-600 mb-1">Platform Revenue (Tax 10%)</p>
+                <p class="text-2xl font-bold text-gray-900">Rp {{ number_format($platformRevenue, 0, ',', '.') }}</p>
             </div>
             <div class="bg-yellow-100 rounded-full p-3">
                 <svg class="w-8 h-8 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -49,6 +53,22 @@
                 </svg>
             </div>
         </div>
+        <p class="text-xs text-gray-500 mt-2">From confirmed bookings</p>
+    </div>
+
+    <div class="bg-white rounded-xl shadow-md p-6">
+        <div class="flex items-center justify-between">
+            <div>
+                <p class="text-sm text-gray-600 mb-1">Total Transaction Volume</p>
+                <p class="text-2xl font-bold text-gray-900">Rp {{ number_format($totalTransactionVolume, 0, ',', '.') }}</p>
+            </div>
+            <div class="bg-purple-100 rounded-full p-3">
+                <svg class="w-8 h-8 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                </svg>
+            </div>
+        </div>
+        <p class="text-xs text-gray-500 mt-2">All confirmed transactions</p>
     </div>
 </div>
 
@@ -67,8 +87,8 @@
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Hotel</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Guest</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Check In</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Check Out</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tax (10%)</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
                     </tr>
                 </thead>
@@ -79,8 +99,8 @@
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{{ $booking->hotel->name }}</td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{{ $booking->guest_name }}</td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{{ $booking->check_in->format('M d, Y') }}</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{{ $booking->check_out->format('M d, Y') }}</td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Rp {{ number_format($booking->total_amount, 0, ',', '.') }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-green-600">Rp {{ number_format($booking->tax, 0, ',', '.') }}</td>
                             <td class="px-6 py-4 whitespace-nowrap">
                                 <span class="px-2 py-1 text-xs font-medium rounded-full
                                     @if($booking->status == 'confirmed') bg-green-100 text-green-800
