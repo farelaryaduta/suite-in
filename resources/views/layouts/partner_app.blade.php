@@ -1544,7 +1544,10 @@
                             class="{{ request()->routeIs('partner.dashboard') ? 'border-blue-500 text-gray-900' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300' }} inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">
                             Dashboard
                         </a>
-                        <!-- Add more links here like 'Bookings', 'Finance' etc later -->
+                        <a href="{{ route('partner.bookings.index') }}"
+                            class="{{ request()->routeIs('partner.bookings.*') ? 'border-blue-500 text-gray-900' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300' }} inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">
+                            Bookings
+                        </a>
                     </div>
                 </div>
                 <div class="flex items-center">
@@ -1563,7 +1566,7 @@
                     <div class="hidden md:ml-4 md:flex md:items-center">
                         <div class="ml-3 relative">
                             <div class="flex items-center space-x-4">
-                                <span class="text-sm font-medium text-gray-700">{{ Auth::user()->name }}</span>
+                                <span class="text-sm font-medium text-gray-700">{{ Auth::guard('partner')->user()->name }}</span>
                                 <form method="POST" action="{{ route('partner.logout') }}">
                                     @csrf
                                     <button type="submit"

@@ -12,7 +12,7 @@ class DashboardController extends Controller
 {
     public function index()
     {
-        $user = Auth::user();
+        $user = Auth::guard('admin')->user();
         
         // Admin sees platform-wide stats
         // Admin revenue = only 10% tax from all confirmed bookings

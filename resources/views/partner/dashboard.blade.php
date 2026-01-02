@@ -47,7 +47,7 @@
             </div>
         </div>
 
-        <!-- Active Properties -->
+        <!-- Total Bookings -->
         <div class="bg-white overflow-hidden shadow rounded-lg">
             <div class="p-5">
                 <div class="flex items-center">
@@ -65,7 +65,7 @@
                             </dt>
                             <dd>
                                 <div class="text-lg font-medium text-gray-900">
-                                    {{ $totalBookings }}
+                                    {{ $bookingStats['total'] }}
                                 </div>
                             </dd>
                         </dl>
@@ -92,7 +92,7 @@
                             </dt>
                             <dd>
                                 <div class="text-lg font-medium text-gray-900">
-                                    {{ $confirmedBookings }}
+                                    {{ $bookingStats['confirmed'] }}
                                 </div>
                             </dd>
                         </dl>
@@ -229,7 +229,8 @@
                                         {{ ucfirst($hotel->status) }}
                                     </span>
                                     <div class="flex space-x-3">
-                                        <a href="{{ route('partner.hotels.edit', $hotel->id) }}" class="text-blue-600 hover:text-blue-900 text-sm font-medium">Manage Property</a>
+                                        <a href="{{ route('partner.hotels.rooms.index', $hotel->id) }}" class="text-green-600 hover:text-green-900 text-sm font-medium">Manage Rooms</a>
+                                        <a href="{{ route('partner.hotels.edit', $hotel->id) }}" class="text-blue-600 hover:text-blue-900 text-sm font-medium">Edit Hotel</a>
                                     </div>
                                 </div>
                             </div>

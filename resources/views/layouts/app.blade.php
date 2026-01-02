@@ -62,8 +62,8 @@
 
                 <!-- Navigation Links -->
                 <div class="hidden md:flex items-center space-x-1">
-                    @auth
-                        @if(Auth::user()->isAdmin())
+                    @auth('web')
+                        @if(Auth::guard('web')->user()->isAdmin())
                             <a href="{{ route('admin.dashboard') }}" class="nav-link text-gray-600 hover:text-blue-600 px-4 py-2 text-sm font-medium rounded-lg hover:bg-blue-50 transition-colors">
                                 <span class="flex items-center space-x-2">
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -72,7 +72,7 @@
                                     <span>Admin Dashboard</span>
                                 </span>
                             </a>
-                        @elseif(Auth::user()->isHotelOwner())
+                        @elseif(Auth::guard('web')->user()->isHotelOwner())
                             <a href="{{ route('partner.dashboard') }}" class="nav-link text-gray-600 hover:text-blue-600 px-4 py-2 text-sm font-medium rounded-lg hover:bg-blue-50 transition-colors">
                                 <span class="flex items-center space-x-2">
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -127,10 +127,10 @@
         <!-- Mobile Menu -->
         <div id="mobile-menu" class="hidden md:hidden bg-white border-t border-gray-100 pb-4">
             <div class="px-4 pt-2 space-y-1">
-                @auth
-                    @if(Auth::user()->isAdmin())
+                @auth('web')
+                    @if(Auth::guard('web')->user()->isAdmin())
                         <a href="{{ route('admin.dashboard') }}" class="block px-4 py-2 text-gray-600 hover:bg-blue-50 rounded-lg">Admin Dashboard</a>
-                    @elseif(Auth::user()->isHotelOwner())
+                    @elseif(Auth::guard('web')->user()->isHotelOwner())
                         <a href="{{ route('partner.dashboard') }}" class="block px-4 py-2 text-gray-600 hover:bg-blue-50 rounded-lg">Partner Dashboard</a>
                     @endif
                     <a href="{{ route('bookings.index') }}" class="block px-4 py-2 text-gray-600 hover:bg-blue-50 rounded-lg">Pesanan Saya</a>

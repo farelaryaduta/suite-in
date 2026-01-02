@@ -42,4 +42,26 @@ return [
     |
     */
     'max_booking_days' => env('BOOKING_MAX_DAYS', 30),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Maximum Guests Per Booking
+    |--------------------------------------------------------------------------
+    |
+    | The maximum number of guests allowed per booking.
+    | Fix #14: Centralized hardcoded value from controller
+    |
+    */
+    'max_guests' => env('BOOKING_MAX_GUESTS', 20),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Maximum Special Requests Length
+    |--------------------------------------------------------------------------
+    |
+    | The maximum character length for special requests field.
+    | Fix #14: Centralized hardcoded value from controller
+    |
+    */
+    'max_special_requests_length' => env('BOOKING_MAX_SPECIAL_REQUESTS', 1000),
 ];

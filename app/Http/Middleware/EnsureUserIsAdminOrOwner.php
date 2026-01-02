@@ -21,9 +21,6 @@ class EnsureUserIsAdminOrOwner
             abort(403, 'Unauthorized access. Please login first.');
         }
 
-        // Refresh user to ensure role is loaded
-        $user->refresh();
-
         if (!$user->isAdmin() && !$user->isHotelOwner()) {
             abort(403, 'Unauthorized access. Admin or Hotel Owner access required. Your role: ' . ($user->role ?? 'none'));
         }

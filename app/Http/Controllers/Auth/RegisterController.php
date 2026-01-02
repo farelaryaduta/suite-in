@@ -7,6 +7,7 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\Rules\Password;
 
 class RegisterController extends Controller
@@ -32,10 +33,17 @@ class RegisterController extends Controller
             $user->role = 'customer'; // Explicitly set role (not from fillable)
             $user->save();
 
-            Auth::login($user);
+            Auth::guard('web')->login($user);
 
             return redirect('/');
         } catch (\Exception $e) {
+            // Fix #10: Improve error logging with detailed context
+            Log::error('User registration failed', [
+                'email' => $request->email,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+            
             return back()->withErrors(['email' => 'Registration failed. Please try again.'])->withInput();
         }
     }

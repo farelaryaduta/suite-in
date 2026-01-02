@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Facades\Log;
 
 class Room extends Model
 {
@@ -47,8 +48,19 @@ class Room extends Model
         return $this->hasMany(BookingRoom::class);
     }
 
+    // Fix #7: Add image file validation with fallback
     public function getImageUrlAttribute(): ?string
     {
-        return $this->image ? asset('storage/' . $this->image) : null;
+        if (!$this->image) {
+            return null;
+        }
+        
+        $path = storage_path('app/public/' . $this->image);
+        if (!file_exists($path)) {
+            Log::warning("Missing room image file: {$this->image}", ['room_id' => $this->id]);
+            return asset('images/default-room.jpg'); // Fallback to default image
+        }
+        
+        return asset('storage/' . $this->image);
     }
 }

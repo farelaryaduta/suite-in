@@ -15,8 +15,14 @@ class PaymentController extends Controller
 {
     public function __construct()
     {
+        // Fix #8: Validate Midtrans configuration
+        $serverKey = config('midtrans.server_key');
+        if (empty($serverKey)) {
+            throw new \Exception('Midtrans server key is not configured. Please set MIDTRANS_SERVER_KEY in .env file.');
+        }
+        
         // Set konfigurasi Midtrans
-        Config::$serverKey = config('midtrans.server_key');
+        Config::$serverKey = $serverKey;
         Config::$isProduction = config('midtrans.is_production');
         Config::$isSanitized = config('midtrans.is_sanitized');
         Config::$is3ds = config('midtrans.is_3ds');
@@ -198,14 +204,25 @@ class PaymentController extends Controller
             return response(['message' => 'Payment not found'], 404);
         }
 
+        // Fix #2: Add transaction_id to payment webhook handler
         if ($transactionStatus == 'capture' || $transactionStatus == 'settlement') {
-            $payment->update(['status' => 'completed', 'paid_at' => now()]);
+            $payment->update([
+                'status' => 'completed',
+                'paid_at' => now(),
+                'transaction_id' => $notification->transaction_id ?? null
+            ]);
             $payment->booking->update(['status' => 'confirmed']);
         } else if ($transactionStatus == 'cancel' || $transactionStatus == 'deny' || $transactionStatus == 'expire') {
-            $payment->update(['status' => 'failed']);
+            $payment->update([
+                'status' => 'failed',
+                'transaction_id' => $notification->transaction_id ?? null
+            ]);
             $payment->booking->update(['status' => 'cancelled']);
         } else if ($transactionStatus == 'pending') {
-            $payment->update(['status' => 'processing']);
+            $payment->update([
+                'status' => 'processing',
+                'transaction_id' => $notification->transaction_id ?? null
+            ]);
         }
 
         return response(['message' => 'Payment status updated']);

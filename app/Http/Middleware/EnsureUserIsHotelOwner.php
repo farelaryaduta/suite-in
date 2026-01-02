@@ -4,28 +4,25 @@ namespace App\Http\Middleware;
 
 use Closure;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Symfony\Component\HttpFoundation\Response;
 
 class EnsureUserIsHotelOwner
 {
     public function handle(Request $request, Closure $next): Response
     {
-        $user = $request->user();
-
-        if (!$user || $user->role !== 'hotel_owner') {
-            // If user is logged in but not hotel owner
-            if ($user) {
-                // Redirect admins to admin dashboard
-                if ($user->isAdmin()) {
-                    return redirect()->route('admin.dashboard')
-                        ->with('error', 'You are an admin. Redirected to Admin Dashboard.');
-                }
-                // Redirect customers to home
-                return redirect()->route('home')
-                    ->with('error', 'You do not have partner access.');
-            }
-            // Not logged in - redirect to partner login
+        // Use partner guard for authentication
+        if (!Auth::guard('partner')->check()) {
             return redirect()->route('partner.login');
+        }
+
+        $user = Auth::guard('partner')->user();
+
+        // Double-check role for security
+        if ($user->role !== 'hotel_owner') {
+            Auth::guard('partner')->logout();
+            $request->session()->invalidate();
+            abort(403, 'Unauthorized access. Partner privileges required.');
         }
 
         return $next($request);

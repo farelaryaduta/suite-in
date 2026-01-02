@@ -16,22 +16,18 @@ class EnsureUserIsAdmin
      */
     public function handle(Request $request, Closure $next): Response
     {
-        $user = $request->user();
-
-        if (!$user || !$user->isAdmin()) {
-            // If user is logged in but not admin, log them out of admin context
-            if ($user) {
-                // Redirect hotel owners to partner dashboard
-                if ($user->isHotelOwner()) {
-                    return redirect()->route('partner.dashboard')
-                        ->with('error', 'You do not have admin access. Redirected to Partner Dashboard.');
-                }
-                // Redirect customers to home
-                return redirect()->route('home')
-                    ->with('error', 'You do not have admin access.');
-            }
-            // Not logged in - redirect to admin login
+        // Use admin guard for authentication
+        if (!Auth::guard('admin')->check()) {
             return redirect()->route('admin.login');
+        }
+
+        $user = Auth::guard('admin')->user();
+
+        // Double-check role for security
+        if ($user->role !== 'admin') {
+            Auth::guard('admin')->logout();
+            $request->session()->invalidate();
+            abort(403, 'Unauthorized access. Admin privileges required.');
         }
 
         return $next($request);

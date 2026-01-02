@@ -27,7 +27,7 @@
                     <a href="{{ Auth::check() ? route('admin.dashboard') : route('admin.login') }}" class="text-2xl font-bold text-gray-900">
                         suite.<span class="text-blue-600">in</span> <span class="text-sm text-gray-500">Admin</span>
                     </a>
-                    @auth
+                    @auth('admin')
                     <div class="hidden md:flex space-x-4">
                         <a href="{{ route('admin.dashboard') }}" class="text-gray-700 hover:text-gray-900 px-3 py-2 text-sm font-medium {{ request()->routeIs('admin.dashboard') ? 'text-blue-600 border-b-2 border-blue-600' : '' }}">Dashboard</a>
                         <a href="{{ route('admin.hotels.index') }}" class="text-gray-700 hover:text-gray-900 px-3 py-2 text-sm font-medium {{ request()->routeIs('admin.hotels.*') ? 'text-blue-600 border-b-2 border-blue-600' : '' }}">Hotels</a>
@@ -35,10 +35,10 @@
                     </div>
                     @endauth
                 </div>
-                @auth
+                @auth('admin')
                 <div class="flex items-center space-x-4">
-                    <span class="text-sm text-gray-600">{{ Auth::user()->name }}</span>
-                    <span class="px-2 py-1 text-xs font-medium rounded-full bg-blue-100 text-blue-800">{{ ucfirst(str_replace('_', ' ', Auth::user()->role ?? 'user')) }}</span>
+                    <span class="text-sm text-gray-600">{{ Auth::guard('admin')->user()->name }}</span>
+                    <span class="px-2 py-1 text-xs font-medium rounded-full bg-blue-100 text-blue-800">{{ ucfirst(str_replace('_', ' ', Auth::guard('admin')->user()->role ?? 'user')) }}</span>
                     <form method="POST" action="{{ route('admin.logout') }}" class="inline">
                         @csrf
                         <button type="submit" class="text-gray-700 hover:text-gray-900 px-3 py-2 text-sm font-medium">Logout</button>

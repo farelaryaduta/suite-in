@@ -14,14 +14,14 @@ class PartnerAuthController extends Controller
     public function showRegisterForm(Request $request)
     {
         // If already logged in as hotel_owner, redirect to dashboard
-        if (Auth::check()) {
-            if (Auth::user()->isHotelOwner()) {
+        if (Auth::guard('partner')->check()) {
+            if (Auth::guard('partner')->user()->isHotelOwner()) {
                 return redirect()->route('partner.dashboard');
             }
             
             // User is logged in but not as partner - auto logout and show register
-            $previousRole = Auth::user()->role === 'admin' ? 'Admin' : ucfirst(Auth::user()->role ?? 'customer');
-            Auth::logout();
+            $previousRole = Auth::guard('partner')->user()->role === 'admin' ? 'Admin' : ucfirst(Auth::guard('partner')->user()->role ?? 'customer');
+            Auth::guard('partner')->logout();
             $request->session()->invalidate();
             $request->session()->regenerateToken();
             
@@ -48,7 +48,10 @@ class PartnerAuthController extends Controller
             $user->role = 'hotel_owner'; // Explicitly set role (not from fillable)
             $user->save();
 
-            Auth::login($user);
+            Auth::guard('partner')->login($user);
+            
+            // Store authenticated role in session for security validation
+            session(['authenticated_role' => 'hotel_owner']);
 
             return redirect()->route('partner.dashboard');
         } catch (\Exception $e) {
@@ -59,14 +62,14 @@ class PartnerAuthController extends Controller
     public function showLoginForm(Request $request)
     {
         // If already logged in as hotel_owner, redirect to dashboard
-        if (Auth::check()) {
-            if (Auth::user()->isHotelOwner()) {
+        if (Auth::guard('partner')->check()) {
+            if (Auth::guard('partner')->user()->isHotelOwner()) {
                 return redirect()->route('partner.dashboard');
             }
             
             // User is logged in but not as partner - auto logout and show login
-            $previousRole = Auth::user()->role === 'admin' ? 'Admin' : ucfirst(Auth::user()->role ?? 'customer');
-            Auth::logout();
+            $previousRole = Auth::guard('partner')->user()->role === 'admin' ? 'Admin' : ucfirst(Auth::guard('partner')->user()->role ?? 'customer');
+            Auth::guard('partner')->logout();
             $request->session()->invalidate();
             $request->session()->regenerateToken();
             
@@ -84,18 +87,19 @@ class PartnerAuthController extends Controller
             'password' => ['required'],
         ]);
 
-        if (Auth::attempt($credentials, $request->boolean('remember'))) {
+        if (Auth::guard('partner')->attempt($credentials, $request->boolean('remember'))) {
             $request->session()->regenerate();
 
-            // Partner portal is ONLY for hotel_owner role - no admin access
-            if (Auth::user()->role !== 'hotel_owner') {
-                Auth::logout();
+            // Partner-only guard - double check role
+            if (Auth::guard('partner')->user()->role !== 'hotel_owner') {
+                Auth::guard('partner')->logout();
                 $request->session()->invalidate();
                 $request->session()->regenerateToken();
                 return back()->withErrors([
                     'email' => 'This portal is for partners only. If you are an admin, please use the admin login.',
                 ]);
             }
+
 
             return redirect()->intended(route('partner.dashboard'));
         }
@@ -107,7 +111,7 @@ class PartnerAuthController extends Controller
 
     public function logout(Request $request)
     {
-        Auth::logout();
+        Auth::guard('partner')->logout();
         $request->session()->invalidate();
         $request->session()->regenerateToken();
         return redirect()->route('partner.index');

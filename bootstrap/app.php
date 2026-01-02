@@ -16,7 +16,10 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->validateCsrfTokens(except: [
             'payment/notification',
         ]);
+        
         $middleware->alias([
+            // admin.owner: Allow BOTH admin AND hotel_owner (for shared resources)
+            // Use with caution - most routes should use 'admin' OR 'hotel.owner', not both
             'admin.owner' => \App\Http\Middleware\EnsureUserIsAdminOrOwner::class,
             'hotel.owner' => \App\Http\Middleware\EnsureUserIsHotelOwner::class,
             'admin' => \App\Http\Middleware\EnsureUserIsAdmin::class,

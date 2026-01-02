@@ -15,7 +15,7 @@ class RoomManagementController extends Controller
 {
     public function index($hotel)
     {
-        $user = Auth::user();
+        $user = Auth::guard('admin')->user();
         
         if ($user->isAdmin()) {
             $hotel = Hotel::findOrFail($hotel);
@@ -33,7 +33,7 @@ class RoomManagementController extends Controller
 
     public function create($hotel)
     {
-        $user = Auth::user();
+        $user = Auth::guard('admin')->user();
         
         if ($user->isAdmin()) {
             $hotel = Hotel::findOrFail($hotel);
@@ -49,7 +49,7 @@ class RoomManagementController extends Controller
 
     public function store(Request $request, $hotel)
     {
-        $user = Auth::user();
+        $user = Auth::guard('admin')->user();
         
         if ($user->isAdmin()) {
             $hotel = Hotel::findOrFail($hotel);
@@ -86,7 +86,7 @@ class RoomManagementController extends Controller
 
     public function edit($hotel, $room)
     {
-        $user = Auth::user();
+        $user = Auth::guard('admin')->user();
         
         if ($user->isAdmin()) {
             $hotel = Hotel::findOrFail($hotel);
@@ -103,7 +103,7 @@ class RoomManagementController extends Controller
 
     public function update(Request $request, $hotel, $room)
     {
-        $user = Auth::user();
+        $user = Auth::guard('admin')->user();
         
         if ($user->isAdmin()) {
             $hotel = Hotel::findOrFail($hotel);
@@ -144,7 +144,7 @@ class RoomManagementController extends Controller
 
     public function destroy($hotel, $room)
     {
-        $user = Auth::user();
+        $user = Auth::guard('admin')->user();
         
         if ($user->isAdmin()) {
             $hotel = Hotel::findOrFail($hotel);

@@ -21,18 +21,17 @@ class LoginController extends Controller
             'password' => 'required',
         ]);
 
-        if (Auth::attempt($request->only('email', 'password'), $request->boolean('remember'))) {
+        if (Auth::guard('web')->attempt($request->only('email', 'password'), $request->boolean('remember'))) {
             $request->session()->regenerate();
             
-            $user = Auth::user();
+            $user = Auth::guard('web')->user();
             
-            // Role-based redirect - direct users to their appropriate dashboard
-            if ($user->isAdmin()) {
-                return redirect()->route('admin.dashboard');
-            }
-            
-            if ($user->isHotelOwner()) {
-                return redirect()->route('partner.dashboard');
+            // Customer-only guard - reject other roles
+            if ($user->role !== 'customer' && !empty($user->role)) {
+                Auth::guard('web')->logout();
+                return back()->withErrors([
+                    'email' => 'Please use the appropriate login page for your account type.',
+                ]);
             }
             
             // Regular customers go to home or intended page
@@ -46,7 +45,7 @@ class LoginController extends Controller
 
     public function logout(Request $request)
     {
-        Auth::logout();
+        Auth::guard('web')->logout();
         $request->session()->invalidate();
         $request->session()->regenerateToken();
         return redirect('/');

@@ -11,14 +11,14 @@ class AdminAuthController extends Controller
     public function showLoginForm(Request $request)
     {
         // If already logged in as admin, redirect to dashboard
-        if (Auth::check()) {
-            if (Auth::user()->isAdmin()) {
+        if (Auth::guard('admin')->check()) {
+            if (Auth::guard('admin')->user()->isAdmin()) {
                 return redirect()->route('admin.dashboard');
             }
             
             // User is logged in but not as admin - auto logout and show login
-            $previousRole = Auth::user()->role === 'hotel_owner' ? 'Partner' : ucfirst(Auth::user()->role ?? 'customer');
-            Auth::logout();
+            $previousRole = Auth::guard('admin')->user()->role === 'hotel_owner' ? 'Partner' : ucfirst(Auth::guard('admin')->user()->role ?? 'customer');
+            Auth::guard('admin')->logout();
             $request->session()->invalidate();
             $request->session()->regenerateToken();
             
@@ -36,18 +36,19 @@ class AdminAuthController extends Controller
             'password' => ['required'],
         ]);
 
-        if (Auth::attempt($credentials, $request->boolean('remember'))) {
+        if (Auth::guard('admin')->attempt($credentials, $request->boolean('remember'))) {
             $request->session()->regenerate();
 
-            // Admin portal is ONLY for admin role
-            if (Auth::user()->role !== 'admin') {
-                Auth::logout();
+            // Admin-only guard - double check role
+            if (Auth::guard('admin')->user()->role !== 'admin') {
+                Auth::guard('admin')->logout();
                 $request->session()->invalidate();
                 $request->session()->regenerateToken();
                 return back()->withErrors([
                     'email' => 'This portal is for administrators only.',
                 ]);
             }
+
 
             return redirect()->intended(route('admin.dashboard'));
         }
@@ -59,7 +60,7 @@ class AdminAuthController extends Controller
 
     public function logout(Request $request)
     {
-        Auth::logout();
+        Auth::guard('admin')->logout();
         $request->session()->invalidate();
         $request->session()->regenerateToken();
         return redirect()->route('admin.login');

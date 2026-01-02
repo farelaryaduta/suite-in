@@ -33,8 +33,8 @@ Route::get('/hotels/{id}', [HotelController::class, 'show'])->name('hotels.show'
 // Payment Notification (Webhook)
 Route::post('/payment/notification', [PaymentController::class, 'notification'])->name('payment.notification');
 
-// Bookings (requires auth)
-Route::middleware('auth')->group(function () {
+// Bookings (requires web guard auth)
+Route::middleware('auth:web')->group(function () {
     Route::get('/bookings', [BookingController::class, 'index'])->name('bookings.index');
     Route::get('/bookings/create', [BookingController::class, 'create'])->name('bookings.create');
     Route::post('/bookings', [BookingController::class, 'store'])->name('bookings.store');
@@ -61,7 +61,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
 });
 
 // Admin Dashboard (requires admin role)
-Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(function () {
+Route::middleware(['auth:admin', 'admin'])->prefix('admin')->name('admin.')->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
     // Hotel Management
@@ -97,14 +97,31 @@ Route::prefix('partner')->name('partner.')->group(function () {
     // Partner logout (requires auth)
     Route::post('/logout', [PartnerAuthController::class, 'logout'])->name('logout')->middleware('auth');
 
-    // Authenticated routes (hotel_owner only)
-    Route::middleware(['auth', 'hotel.owner'])->group(function () {
+    // Authenticated routes (hotel_owner only) - partner guard
+    Route::middleware(['auth:partner', 'hotel.owner'])->group(function () {
         Route::get('/dashboard', [PartnerDashboardController::class, 'index'])->name('dashboard');
+        
+        // Hotel Management
         Route::resource('hotels', PartnerHotelController::class);
 
-        // Partner Room Management
-        Route::get('/hotels/{hotel}/rooms/create', [App\Http\Controllers\Partner\PartnerRoomController::class, 'create'])->name('hotels.rooms.create');
-        Route::post('/hotels/{hotel}/rooms', [App\Http\Controllers\Partner\PartnerRoomController::class, 'store'])->name('hotels.rooms.store');
+        // Room Management (Full CRUD)
+        Route::prefix('hotels/{hotel}/rooms')->name('hotels.rooms.')->group(function () {
+            Route::get('/', [App\Http\Controllers\Partner\PartnerRoomController::class, 'index'])->name('index');
+            Route::get('/create', [App\Http\Controllers\Partner\PartnerRoomController::class, 'create'])->name('create');
+            Route::post('/', [App\Http\Controllers\Partner\PartnerRoomController::class, 'store'])->name('store');
+            Route::get('/{room}/edit', [App\Http\Controllers\Partner\PartnerRoomController::class, 'edit'])->name('edit');
+            Route::put('/{room}', [App\Http\Controllers\Partner\PartnerRoomController::class, 'update'])->name('update');
+            Route::delete('/{room}', [App\Http\Controllers\Partner\PartnerRoomController::class, 'destroy'])->name('destroy');
+            Route::post('/{room}/toggle', [App\Http\Controllers\Partner\PartnerRoomController::class, 'toggleActive'])->name('toggle');
+        });
+        
+        // Booking Management
+        Route::prefix('bookings')->name('bookings.')->group(function () {
+            Route::get('/', [App\Http\Controllers\Partner\PartnerBookingController::class, 'index'])->name('index');
+            Route::get('/{booking}', [App\Http\Controllers\Partner\PartnerBookingController::class, 'show'])->name('show');
+            Route::post('/{booking}/status', [App\Http\Controllers\Partner\PartnerBookingController::class, 'updateStatus'])->name('updateStatus');
+            Route::post('/{booking}/cancel', [App\Http\Controllers\Partner\PartnerBookingController::class, 'cancel'])->name('cancel');
+        });
     });
 });
 

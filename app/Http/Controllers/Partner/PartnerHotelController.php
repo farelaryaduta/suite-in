@@ -56,7 +56,7 @@ class PartnerHotelController extends Controller
         $hotel = \Illuminate\Support\Facades\DB::transaction(function () use ($validated, $request) {
             // Create Hotel
             $hotelData = collect($validated)->except(['amenities', 'rooms'])->toArray();
-            $hotelData['owner_id'] = Auth::id();
+            $hotelData['owner_id'] = Auth::guard('partner')->id();
             $hotelData['status'] = 'draft';
             $hotelData['rating'] = 0;
             $hotelData['total_reviews'] = 0;
@@ -89,7 +89,7 @@ class PartnerHotelController extends Controller
 
     public function edit(Hotel $hotel)
     {
-        if ($hotel->owner_id !== Auth::id()) {
+        if ($hotel->owner_id !== Auth::guard('partner')->id()) {
             abort(403);
         }
 
@@ -101,7 +101,7 @@ class PartnerHotelController extends Controller
 
     public function update(Request $request, Hotel $hotel)
     {
-        if ($hotel->owner_id !== Auth::id()) {
+        if ($hotel->owner_id !== Auth::guard('partner')->id()) {
             abort(403);
         }
 
@@ -166,7 +166,7 @@ class PartnerHotelController extends Controller
 
     public function destroy(Hotel $hotel)
     {
-        if ($hotel->owner_id !== Auth::id()) {
+        if ($hotel->owner_id !== Auth::guard('partner')->id()) {
             abort(403);
         }
 

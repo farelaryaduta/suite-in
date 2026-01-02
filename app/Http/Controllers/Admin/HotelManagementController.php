@@ -13,7 +13,7 @@ class HotelManagementController extends Controller
 {
     public function index()
     {
-        $user = Auth::user();
+        $user = Auth::guard('admin')->user();
 
         if ($user->isAdmin()) {
             $hotels = Hotel::with('owner')->latest()->paginate(15);
@@ -32,7 +32,7 @@ class HotelManagementController extends Controller
 
     public function store(Request $request)
     {
-        $user = Auth::user();
+        $user = Auth::guard('admin')->user();
 
         $validated = $request->validate([
             'name' => 'required|string|max:255',
@@ -69,7 +69,7 @@ class HotelManagementController extends Controller
 
     public function edit($hotel)
     {
-        $user = Auth::user();
+        $user = Auth::guard('admin')->user();
 
         if ($user->isAdmin()) {
             $hotel = Hotel::with('amenities')->findOrFail($hotel);
@@ -83,7 +83,7 @@ class HotelManagementController extends Controller
 
     public function update(Request $request, $hotel)
     {
-        $user = Auth::user();
+        $user = Auth::guard('admin')->user();
 
         if ($user->isAdmin()) {
             $hotel = Hotel::findOrFail($hotel);
@@ -137,7 +137,7 @@ class HotelManagementController extends Controller
 
     public function destroy($hotel)
     {
-        $user = Auth::user();
+        $user = Auth::guard('admin')->user();
 
         if ($user->isAdmin()) {
             $hotel = Hotel::findOrFail($hotel);

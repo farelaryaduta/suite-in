@@ -12,38 +12,50 @@ class PartnerDashboardController extends Controller
 {
     public function index()
     {
-        $userId = Auth::id();
+        $userId = Auth::guard('partner')->id();
         
         // Get partner's hotels
         $hotels = Hotel::where('owner_id', $userId)->with('rooms')->latest()->get();
         $hotelIds = $hotels->pluck('id');
         
-        // Get total bookings for partner's hotels
-        $totalBookings = Booking::whereIn('hotel_id', $hotelIds)->count();
+        // Get booking statistics by status
+        $bookingStats = [
+            'total' => Booking::whereIn('hotel_id', $hotelIds)->count(),
+            'pending' => Booking::whereIn('hotel_id', $hotelIds)->where('status', 'pending')->count(),
+            'confirmed' => Booking::whereIn('hotel_id', $hotelIds)->where('status', 'confirmed')->count(),
+            'completed' => Booking::whereIn('hotel_id', $hotelIds)->where('status', 'completed')->count(),
+            'cancelled' => Booking::whereIn('hotel_id', $hotelIds)->where('status', 'cancelled')->count(),
+        ];
         
-        // Get confirmed bookings count
-        $confirmedBookings = Booking::whereIn('hotel_id', $hotelIds)
-            ->where('status', 'confirmed')
+        // ACTION ITEMS: Pending bookings that need attention
+        $pendingBookings = Booking::whereIn('hotel_id', $hotelIds)
+            ->where('status', 'pending')
             ->count();
         
-        // Partner revenue = subtotal + service_charge (tax goes to admin/platform)
-        // So partner gets: subtotal + service_charge (excluding 10% tax)
+        // ACTION ITEMS: Hotels pending approval
+        $pendingHotels = Hotel::where('owner_id', $userId)
+            ->where('status', 'pending')
+            ->count();
+        
+        // Partner revenue = subtotal + service_charge (tax goes to platform)
+        // Only count confirmed and completed bookings
         $partnerRevenue = Booking::whereIn('hotel_id', $hotelIds)
-            ->where('status', 'confirmed')
+            ->whereIn('status', ['confirmed', 'completed'])
             ->selectRaw('SUM(subtotal + service_charge) as total')
             ->value('total') ?? 0;
         
-        // Get recent bookings for partner's hotels
+        // Get recent bookings for partner's hotels with proper eager loading
         $recentBookings = Booking::whereIn('hotel_id', $hotelIds)
-            ->with(['hotel', 'user', 'rooms.room.roomType'])
+            ->with(['hotel', 'user', 'rooms.room.roomType', 'payment'])
             ->latest()
             ->take(10)
             ->get();
         
         return view('partner.dashboard', compact(
             'hotels', 
-            'totalBookings', 
-            'confirmedBookings',
+            'bookingStats',
+            'pendingBookings',
+            'pendingHotels',
             'partnerRevenue', 
             'recentBookings'
         ));
